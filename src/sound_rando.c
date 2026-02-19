@@ -14,6 +14,22 @@
 #include "sys/main.h"
 #include "sys/rand.h"
 
+extern sndstate *g_SndpFreeStatesHead;
+extern void func_800668A4(void);
+
+/** 
+ * Fade out all currently playing sounds if we run out of state slots.
+ * The SFX randomizer often starts bugged(?) sounds that never end which will eventually
+ * stop all sounds from playing.
+ */
+RECOMP_HOOK("func_80066064") void func_80066064_hook(void) {
+    // TODO: this causes crashes occasionally! figure out why
+    if (g_SndpFreeStatesHead == NULL) {
+        recomp_printf("too many sounds!!!\n");
+        func_800668A4();
+    }
+}
+
 #include "recomp/dlls/engine/6_AMSFX_recomp.h"
 
 #define IS_MP3 0x8000
@@ -33,23 +49,22 @@ RECOMP_HOOK_RETURN_DLL(dll_6_func_DE8) void dll_6_func_DE8_hook_ret(void) {
     if (soundDef == NULL) return;
 
     if (soundDef->bankAndClipID & IS_MP3) {
+        // Randomize MPEG IDs
         if (rand_next(0, 99) >= (f32)recomp_get_config_double("random_dialog_chance")) return;
 
         s32 numMpegEntries = (get_file_size(MPEG_TAB) / 4) - 1;
         soundDef->bankAndClipID = rand_next(0, numMpegEntries - 1) | IS_MP3;
-        //soundDef->volume += soundDef->volume * ((f32)rand_next(-40, 40) / 100.0f);
     } else {
+        // Randomize SFX sound IDs
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_sfx_chance")) {
             soundDef->bankAndClipID = rand_next(0, _bss_0->bankArray[0]->instArray[0]->soundCount - 1);
         }
-        //soundDef->volume += soundDef->volume * ((f32)rand_next(-40, 40) / 100.0f);
 
+        // Randomize SFX pitch
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_sfx_pitch_chance")) {
             s32 randomRange = (s32)recomp_get_config_double("random_sfx_pitch_amount");
             soundDef->pitch += soundDef->pitch * ((f32)rand_next(-randomRange, randomRange) / 100.0f);
         }
-
-       // _bss_0->bankArray[0]->instArray[0]->soundArray[soundDef->bankAndClipID]->wavetable->waveInfo.adpcmWave.loop = NULL;
     }
 }
 
@@ -62,6 +77,9 @@ RECOMP_PATCH void _bnkfPatchWaveTable(ALWaveTable *w, s32 offset, s32 table) {
 
 	w->base += table;
 
+    // @recomp: Disable looping on sounds if enabled. For the SFX randomizer, looping sounds
+    //          will often play and never end otherwise which can be a bit overwhelming.
+    // TODO: this currently affects music/ambient banks! we don't want that!
 	if (w->type == AL_ADPCM_WAVE) {
 		w->waveInfo.adpcmWave.book  = (ALADPCMBook *)((u8 *)w->waveInfo.adpcmWave.book + offset);
 
@@ -141,6 +159,7 @@ RECOMP_PATCH s32 amseq_set(Object *obj, u16 actionNo, const char *filename, s32 
     // "music %08x,%d\n"
     queue_load_file_region_to_ptr((void** ) sMusicAction, MUSICACTIONS_BIN, (actionNo - 1) * sizeof(MusicAction), sizeof(MusicAction));
     
+    // @recomp: Randomize ambience/music seq IDs
     if (sMusicAction->playerNo < 2) {
         // ambience
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_ambience_chance")) {
@@ -198,6 +217,7 @@ RECOMP_PATCH void amseq_play_ex(u8 playerNo, u8 seqID, s16 bpm, s16 volume, u16 
         // "amSeqPlayEx: Warning, player value '%d' out of range.\n"
         return;
     }
+    // @recomp: Randomize ambience/music seq IDs
     if (playerNo < 2) {
         // ambience
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_ambience_chance")) {
@@ -226,104 +246,3 @@ RECOMP_PATCH void amseq_play_ex(u8 playerNo, u8 seqID, s16 bpm, s16 volume, u16 
         sSeqPlayers[playerNo]->nextVolDownRate = 0;
     }
 }
-
-#include "recompdata.h"
-
-//static U32ValueHashmapHandle sSndTimerHashmap;
-
-extern N_ALSndPlayer *g_SndPlayer;
-extern sndstate *g_SndpAllocStatesHead;
-
-extern void sndpFreeState(sndstate *state);
-extern void func_80065D7C(sndstate *state);
-
-// static s32 ticks = 0;
-// static s32 nowSeconds = 0;
-
-// RECOMP_HOOK_RETURN("game_init") void game_init_hook(void) {
-//     sSndTimerHashmap = recomputil_create_u32_value_hashmap();
-// }
-
-// RECOMP_ON_GAME_TICK_CALLBACK void game_tick_callback(void) {
-//     ticks += gUpdateRate;
-//     if (ticks >= 60) {
-//         ticks -= 60;
-//         nowSeconds++;
-//     }
-// }
-
-RECOMP_HOOK("some_sound_func") void some_sound_func_hook(ALBank *bank, s16 soundnum) {
-    // 251 412
-    recomp_printf("playing soundnum %d\n", soundnum);
-}
-
-extern sndstate *g_SndpFreeStatesHead;
-extern void func_800668A4(void);
-
-RECOMP_HOOK("func_80066064") void func_80066064_hook(void) {
-    if (g_SndpFreeStatesHead == NULL) {
-        recomp_printf("too many sounds!!!\n");
-        func_800668A4();
-    }
-}
-//     // _Bool stop;
-//     // do {
-//     //     stop = TRUE;
-// 	    sndstate *state = g_SndpAllocStatesHead;
-
-//         while (state != NULL) {
-//             u32 startedSeconds;
-//             if (recomputil_u32_value_hashmap_get(sSndTimerHashmap, (u32)state, &startedSeconds)) {
-//                 if (nowSeconds - startedSeconds >= 2) { // 2 seconds
-//                     recomp_printf("freeing sound %p early!\n", state);
-//                     //func_80065D7C(state);
-//                     //stop = FALSE;
-//                     ///break;
-
-//                     N_ALSndpEvent evt;
-//                     evt.common.type = AL_SNDP_END_EVT;
-// 					evt.common.state = (N_ALSoundState *)state;
-//                     n_alEvtqPostEvent(&g_SndPlayer->evtq, &evt.msg, 10, 0);
-
-//                     recomputil_u32_value_hashmap_insert(sSndTimerHashmap, (u32)state, nowSeconds);
-//                 }
-//             }
-
-//             state = (sndstate *)state->node.next;
-//         }
-//    // } while (!stop);
-// }
-
-
-// RECOMP_HOOK_RETURN("func_80066064") void func_80066064_ret(void) {
-//     sndstate *state = recomphook_get_return_ptr();
-//     if (state == NULL) {
-//         // if (g_SndpAllocStatesHead != NULL) {
-//         //     N_ALSndpEvent evt;
-//         //     evt.common.type = AL_SNDP_END_EVT;
-//         //     evt.common.state = (N_ALSoundState *)g_SndpAllocStatesHead;
-//         //     n_alEvtqPostEvent(&g_SndPlayer->evtq, &evt.msg, 10, 0);
-//         //     recomp_printf("too many sounds!!!\n");
-//         // }
-
-//         recomp_printf("too many sounds!!!\n");
-
-//         // state = g_SndpAllocStatesHead;
-
-//         // while (state != NULL) {
-//         //     // N_ALSndpEvent evt;
-//         //     // evt.common.type = AL_SNDP_END_EVT;
-//         //     // evt.common.state = (N_ALSoundState *)state;
-//         //     // n_alEvtqPostEvent(&g_SndPlayer->evtq, &evt.msg, 10, 0);
-//         //     func_80065D7C(state);
-
-//         //     state = (sndstate *)state->node.next;
-//         // }
-
-//         func_800668A4();
-
-//         return;
-//     }
-
-//    // recomputil_u32_value_hashmap_insert(sSndTimerHashmap, (u32)state, nowSeconds);
-// }

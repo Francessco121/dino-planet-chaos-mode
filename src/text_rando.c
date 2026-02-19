@@ -1,12 +1,12 @@
-#include "dll.h"
 #include "modding.h"
-
-#include "dlls/engine/21_gametext.h"
-#include "PR/ultratypes.h"
 #include "recompconfig.h"
+
+#include "PR/ultratypes.h"
+#include "dlls/engine/21_gametext.h"
 #include "sys/dll.h"
 #include "sys/gfx/texture.h"
 #include "sys/rand.h"
+#include "dll.h"
 
 static void *hijack_dll_export(DLLFile *dll, s32 exportIdx, void *hijack) {
     u32 *vtbl = DLL_FILE_TO_EXPORTS(dll);
@@ -21,29 +21,21 @@ static void *hijack_dll_export(DLLFile *dll, s32 exportIdx, void *hijack) {
 
 #include "recomp/dlls/engine/21_gametext_recomp.h"
 
+/* Note: Globally randomizing text chunks/groups causes crashes. Randomizing strings within chunks is OK. */
+
 extern u16 sBankEntryCount;
 extern u8 *sCurrentBank_StrCounts;
-
-// typedef GameTextChunk* (*gametext_get_chunk)(u16 chunk);
-// static gametext_get_chunk gametext_get_chunk_original; 
-// static GameTextChunk* gametext_get_chunk_hijack(u16 chunk);
 
 typedef char* (*gametext_get_text)(u16 chunk, u16 strIndex);
 static gametext_get_text gametext_get_text_original; 
 static char* gametext_get_text_hijack(u16 chunk, u16 strIndex);
 
 RECOMP_HOOK_DLL(gametext_ctor) void gametext_ctor_hook(DLLFile *dll) {
-    //gametext_get_chunk_original = hijack_dll_export(dll, 4, gametext_get_chunk_hijack);
     gametext_get_text_original = hijack_dll_export(dll, 5, gametext_get_text_hijack);
 }
 
-// static GameTextChunk* gametext_get_chunk_hijack(u16 chunk) {
-//     chunk = rand_next(0, sBankEntryCount - 1);
-    
-//     return gametext_get_chunk_original(chunk);
-// }
-
 static char* gametext_get_text_hijack(u16 chunk, u16 strIndex) {
+    // @recomp: Randomize string index
     if (rand_next(0, 99) < (f32)recomp_get_config_double("random_text_chance")) {
         strIndex = rand_next(0, sCurrentBank_StrCounts[chunk] - 1);
     }
@@ -88,6 +80,7 @@ extern GameTextChunk *_bss_7AC;
 extern void dll_22_func_448(void);
 
 RECOMP_PATCH void dll_22_func_368(u16 arg0) {
+    // @recomp: Randomize text group that the subtitle pulls from
     if (rand_next(0, 99) < (f32)recomp_get_config_double("random_text_chance")) {
         arg0 = rand_next(0, sBankEntryCount - 1);
     }

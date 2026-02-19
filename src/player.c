@@ -5,31 +5,37 @@
 #include "dlls/engine/18_objfsa.h"
 #include "dlls/objects/210_player.h"
 #include "dlls/objects/214_animobj.h"
+#include "game/gamebits.h"
 #include "sys/joypad.h"
 #include "sys/objanim.h"
 #include "sys/objtype.h"
 #include "sys/newshadows.h"
 #include "dll.h"
-#include "game/gamebits.h"
 
 #include "recomp/dlls/objects/210_player_recomp.h"
 
 extern f32 _data_4[];
-extern u8 _bss_14[0x4];
 extern f32 _data_8[];
-
-extern f32 _data_6FC[];
-
 extern u8 _data_14[4];
 extern s16 _data_18[2];
+extern f32 _data_6FC[];
 
+extern u8 _bss_14[0x4];
+extern f32 _bss_1B0[0x4];
+extern f32 _bss_1F8[2];
 extern s16 _bss_200;
+extern s16 _bss_202;
+extern f32 _bss_204;
+extern f32 _bss_208;
+extern s16 _data_564[];
 
 extern s32 dll_210_func_7E6C(Object* player, Player_Data* arg1, ObjFSA_Data* fsa, Player_Data3B4* arg3, f32 arg4, s32 arg5);
 extern s32 dll_210_func_7BC4(Object* player, Player_Data* arg1, u32* arg2, UnkArg4* arg3);
 extern void dll_210_func_1DAB0(Object* player);
 extern s32 dll_210_func_18E80(Object* player, ObjFSA_Data* fsa, f32 arg2);
 extern void dll_210_func_D510(ObjFSA_Data* fsa, f32 arg1);
+extern s32 dll_210_func_EFB4(Object* player, ObjFSA_Data* fsa, f32 arg2);
+extern void dll_210_func_7260(Object* player, Player_Data* arg1);
 
 static u8 cutsceneActive = FALSE;
 static u8 sizeReverted = FALSE;
@@ -101,14 +107,14 @@ RECOMP_PATCH s32 dll_210_func_C3D0(Object* player, ObjFSA_Data* fsa, f32 arg2) {
     spAC->unk8B8 = 1;
     fsa->flags |= 0x200000;
     dll_210_func_D510(fsa, arg2);
-    //recomp_printf("curModAnimId = %d\n", player->curModAnimId);
     switch (player->curModAnimId) {
         case 0x417:
             fsa->animTickDelta = 0.1f;
             gDLL_18_objfsa->vtbl->func7(player, fsa, 1.0f, 1);
             if (player->animProgress > 0.99f) {
                 func_80023D30(player, 0x12, 0.0f, 0U);
-                f32 speedScale = (player->def->scale / player->srt.scale); // @recomp: Scale jump with player size
+                // @recomp: Scale jump speed/length with player size
+                f32 speedScale = (player->def->scale / player->srt.scale);
                 fsa->unk278 = 2.0f * speedScale;
                 fsa->animTickDelta = 0.0f;
                 _bss_8 = 0.5f;
@@ -238,9 +244,11 @@ RECOMP_PATCH s32 dll_210_func_75B0(Object* player, Func_80059C40_Struct* arg1, P
         if (arg1->unk50 == 2 || arg1->unk50 == 0x11) {
             return 4;
         }
+        // @recomp: Always do a jump when crossing a hit line that is either a jump or ledge grab depending
+        //          on walkspeed. This check doesn't work right when the player is scaled down.
         //if (objdata->unk0.unk278 >= 0.94f) {
             return 5;
-      //  }
+        //}
         if (arg1->unk50 != 4) {
             return 4;
         }
@@ -248,15 +256,6 @@ RECOMP_PATCH s32 dll_210_func_75B0(Object* player, Func_80059C40_Struct* arg1, P
     }
     return 0;
 }
-
-extern s32 dll_210_func_EFB4(Object* player, ObjFSA_Data* fsa, f32 arg2);
-extern s16 _bss_202;
-extern s16 _data_564[];
-extern f32 _bss_1B0[0x4];
-extern f32 _bss_1F8[2];
-extern f32 _bss_204;
-extern f32 _bss_208;
-extern void dll_210_func_7260(Object* player, Player_Data* arg1);
 
 RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
     f32 temp_fa0;
@@ -330,7 +329,9 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         break;
     case 2:
         temp_fa0 = _bss_1B0[2] + objdata->unk490.unk4;
-        //player->speed.f[1] += -0.15f * arg2; // @recomp: remove gravity
+        // @recomp: Remove gravity applied when jumping up to grab a ledge.
+        //          Makes it impossible to grab ledges when the player is scaled down.
+        //player->speed.f[1] += -0.15f * arg2;
         sp68 = (objdata->unk7EC.y - objdata->unk490.unk8) / (temp_fa0 - objdata->unk490.unk8);
         if (sp68 < 0.0f) {
             sp68 = 0.0f;
@@ -339,7 +340,9 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         }
         player->srt.transl.f[0] = (fsa->unk2EC.x * sp68) + _bss_204;
         player->srt.transl.f[2] = (fsa->unk2EC.z * sp68) + _bss_208;
-        if (player->speed.f[1] < 0) { // @recomp: prevent death
+        // @recomp: Cancel ledge grab jump if we start falling. Otherwise, the player will just
+        //          fall through the world.
+        if (player->speed.f[1] < 0) {
             return 0x15;
         }
         if (temp_fa0 <= objdata->unk7EC.y) {

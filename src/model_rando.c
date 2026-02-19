@@ -49,9 +49,12 @@ RECOMP_PATCH ModelInstance* model_load_create_instance(s32 id, u32 flags) {
         read_file_region(MODELIND_BIN, gAuxBuffer, id * 2, 8);
         id = gAuxBuffer[0];
     }
+    // @recomp: Randomize model ID
     if (rand_next(0, 99) < (f32)recomp_get_config_double("random_model_chance")) {
-        if (id != 0)
+        // Don't randomize ID 0 (causes crashes?)
+        if (id != 0) {
             id = rand_next(1, gNumModelsTabEntries - 1);
+        }
     }
     for (i = 0; i < gNumLoadedModels; i++) {
         if (id != MODEL_SLOT_ID(gLoadedModels, i)) {

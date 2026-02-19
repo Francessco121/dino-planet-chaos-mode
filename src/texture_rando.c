@@ -1,9 +1,9 @@
 #include "modding.h"
+#include "recompconfig.h"
 
 #include "PR/ultratypes.h"
 #include "PR/gbi.h"
 #include "PR/mbi.h"
-#include "recompconfig.h"
 #include "sys/gfx/texture.h"
 #include "sys/asset_thread.h"
 #include "sys/fs.h"
@@ -73,6 +73,7 @@ RECOMP_PATCH Texture* tex_load(s32 id, s32 param2) {
         binFileID = TEX1_BIN;
         tabEntry &= 0x7FFF;
 
+        // @recomp: Randomize TEX1 indices
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_tex1_chance")) {
             tabEntry = rand_next(0, gTexTabTextureCounts[tab] - 1);
         }
@@ -80,6 +81,7 @@ RECOMP_PATCH Texture* tex_load(s32 id, s32 param2) {
         tab = 0; // TEX0
         binFileID = TEX0_BIN;
 
+        // @recomp: Randomize TEX0 indices
         if (rand_next(0, 99) < (f32)recomp_get_config_double("random_tex0_chance")) {
             tabEntry = rand_next(0, gTexTabTextureCounts[tab] - 1);
         }
