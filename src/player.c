@@ -18,6 +18,7 @@ extern f32 _data_4[];
 extern f32 _data_8[];
 extern u8 _data_14[4];
 extern s16 _data_18[2];
+extern s16 _data_564[];
 extern f32 _data_6FC[];
 
 extern u8 _bss_14[0x4];
@@ -27,7 +28,8 @@ extern s16 _bss_200;
 extern s16 _bss_202;
 extern f32 _bss_204;
 extern f32 _bss_208;
-extern s16 _data_564[];
+extern s16 _data_69C[];
+extern s16 _data_6C0[];
 
 extern s32 dll_210_func_7E6C(Object* player, Player_Data* arg1, ObjFSA_Data* fsa, Player_Data3B4* arg3, f32 arg4, s32 arg5);
 extern s32 dll_210_func_7BC4(Object* player, Player_Data* arg1, u32* arg2, UnkArg4* arg3);
@@ -330,7 +332,7 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
     case 2:
         temp_fa0 = _bss_1B0[2] + objdata->unk490.unk4;
         // @recomp: Remove gravity applied when jumping up to grab a ledge.
-        //          Makes it impossible to grab ledges when the player is scaled down.
+        //          Gravity makes it impossible to grab ledges when the player is scaled down.
         //player->speed.f[1] += -0.15f * arg2;
         sp68 = (objdata->unk7EC.y - objdata->unk490.unk8) / (temp_fa0 - objdata->unk490.unk8);
         if (sp68 < 0.0f) {
@@ -424,6 +426,163 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         if (sp5E != 0) {
             func_80025540(player, _data_564[_bss_200 + 1], sp5E);
         }
+        fsa->animTickDelta = sp6C;
+    }
+    dll_210_func_7260(player, objdata);
+    return 0;
+}
+
+RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) {
+    Player_Data* objdata = player->data;
+    s32 pad;
+    Vec3f sp7C;
+    Vec3f sp70;
+    f32 sp6C;
+    f32 temp_fa1;
+    f32 var_fv0;
+    s16 pad_sp62;
+    s16 sp60;
+    ModelInstance* sp5C = player->modelInsts[player->modelInstIdx];
+    s32 pad2;
+    Vec3f sp4C;
+    u8 sp4B;
+
+    {
+        s32 temp_v0 = dll_210_func_EFB4(player, fsa, arg2);
+        if (temp_v0) { return temp_v0; }
+    }
+    // @fake
+    if ((_bss_200 && _bss_200) && _bss_200) {}
+    _bss_202 = _bss_200;
+    sp4B = 0;
+    switch (_bss_200) {
+    case 0:
+        if (fsa->unk33A != 0) {
+            player->positionMirror.f[0] = objdata->unk7EC.x;
+            player->positionMirror.f[1] = objdata->unk7EC.y;
+            player->positionMirror.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            func_80023D30(player, _data_69C[1], 0.0f, 1U);
+            fsa->animTickDelta = 0.01f;
+            _bss_202 = _bss_200 = 1;
+            func_8001A3FC(sp5C, 0U, 0, 0.0f, player->srt.scale, &sp7C, &sp60);
+            player->srt.transl.f[1] -= sp7C.f[1];
+            temp_fa1 = (_bss_1B0[2] + (objdata->unk6B0.unk0.y - objdata->unk7EC.y));
+            player->speed.f[1] = sqrtf(-temp_fa1 * -5.6f);
+            player->speed.f[1] = sqrtf(-temp_fa1 * -0.34f);
+            sp4C.f[0] = *_bss_1F8 * objdata->unk6B0.unkC.x;
+            sp4C.f[1] = *_bss_1F8 * objdata->unk6B0.unkC.y;
+            sp4C.f[2] = *_bss_1F8 * objdata->unk6B0.unkC.z;
+            sp70.f[0] = objdata->unk6B0.unk1C.x + sp4C.x;
+            sp70.f[1] = objdata->unk6B0.unk1C.y + sp4C.y;
+            sp70.f[2] = objdata->unk6B0.unk1C.z + sp4C.z;
+            fsa->unk2EC.f[0] = sp70.f[0] - player->srt.transl.f[0];
+            fsa->unk2EC.f[1] = 0.0f;
+            fsa->unk2EC.f[2] = sp70.f[2] - player->srt.transl.f[2];
+            _bss_204 = player->srt.transl.f[0];
+            _bss_208 = player->srt.transl.f[2];
+        } else {
+            player->speed.f[1] = 0.0f;
+            gDLL_18_objfsa->vtbl->func10(player, fsa, arg2, 0.1f);
+        }
+        break;
+    case 1:
+        temp_fa1 = _bss_1B0[2] + objdata->unk6B0.unk0.y;
+        // @recomp: Remove gravity applied when jumping up to grab a rope.
+        //          Gravity makes it impossible to grab ropes when the player is scaled down.
+        //player->speed.f[1] += -0.17f * arg2;
+        // @recomp: Cancel rope grab jump if we start falling. Otherwise, the player will just
+        //          fall through the world.
+        if (player->speed.f[1] < 0) {
+            return 13 + 1;
+        }
+        var_fv0 = (objdata->unk7EC.y - objdata->unk6B0.unk0.z) / (temp_fa1 - objdata->unk6B0.unk0.z);
+        if (var_fv0 < 0.0f) {
+            var_fv0 = 0.0f;
+        } else if (var_fv0 > 1.0f) {
+            var_fv0 = 1.0f;
+        }
+        player->srt.transl.f[0] = (fsa->unk2EC.f[0] * var_fv0) + _bss_204;
+        player->srt.transl.f[2] = (fsa->unk2EC.f[2] * var_fv0) + _bss_208;
+        if ((temp_fa1 - 1.0f) <= objdata->unk7EC.y) {
+            if (objdata->unk848 == 0) {
+                objdata->unk848 = gDLL_6_AMSFX->vtbl->play_sound(player, SOUND_768_Rope_Climb, MAX_VOLUME, NULL, NULL, 0, NULL);
+                gDLL_6_AMSFX->vtbl->func_954(objdata->unk848, ((f32) rand_next(-0xF, 0xF) / 100.0f) + 1.0f);
+            }
+            _bss_200 = 7;
+            sp4B = 1;
+            sp6C = 0.035f;
+            func_80023D30(player, 0x10, 0.0f, 1U);
+            fsa->animTickDelta = 0.035f;
+            player->srt.transl.f[0] = objdata->unk6B0.unk1C.x;
+            player->srt.transl.f[1] = objdata->unk6B0.unk1C.y;
+            player->srt.transl.f[2] = objdata->unk6B0.unk1C.z;
+            player->speed.f[1] = 0.0f;
+        }
+        break;
+    case 7:
+    case 8:
+        if (fsa->unk33A != 0) {
+            player->positionMirror.f[0] = objdata->unk7EC.x;
+            player->positionMirror.f[1] = objdata->unk7EC.y;
+            player->positionMirror.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            dll_210_func_7260(player, objdata);
+            func_80023D30(player, _data_6C0[0], 0.0f, 1U);
+            return 0x2E;
+        }
+        break;
+    case 2:
+        if (fsa->unk33A != 0) {
+            if (fsa->yAnalogInput > 5.0f) {
+                player->positionMirror.f[0] = objdata->unk7EC.x;
+                player->positionMirror.f[1] = objdata->unk7EC.y;
+                player->positionMirror.f[2] = objdata->unk7EC.z;
+                inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+                dll_210_func_7260(player, objdata);
+                func_80023D30(player, _data_6C0[0], 0.0f, 1U);
+                return 0x2E;
+            }
+            if (fsa->yAnalogInput < -5.0f) {
+                return 0x2F;
+            }
+            _bss_200 = 3;
+            sp6C = 0.008f;
+        }
+        break;
+    case 3:
+        if (fsa->yAnalogInput > 5.0f) {
+            player->positionMirror.f[0] = objdata->unk7EC.x;
+            player->positionMirror.f[1] = objdata->unk7EC.y;
+            player->positionMirror.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            dll_210_func_7260(player, objdata);
+            func_80023D30(player, _data_6C0[0], 0.0f, 1U);
+            return 0x2E;
+        }
+        if (fsa->yAnalogInput < -5.0f) {
+            return 0x2F;
+        }
+        break;
+    default:
+        _bss_200 = 0;
+        sp6C = 0.029f;
+        fsa->unk2F8 = objdata->unk6B0.unk54 - player->srt.yaw;
+        if (objdata->unk6B0.unk45 == 0) {
+            fsa->unk2F8 += 32768.0f;
+        }
+        if (fsa->unk2F8 > 32768.0f) {
+            fsa->unk2F8 += -65535.0f;
+        }
+        if (fsa->unk2F8 < -32768.0f) {
+            fsa->unk2F8 += 65535.0f;
+        }
+        fsa->unk2A0 = 0.0f;
+        break;
+    }
+
+    if (_bss_202 != _bss_200) {
+        func_80023D30(player, _data_69C[_bss_200], 0.0f, sp4B);
         fsa->animTickDelta = sp6C;
     }
     dll_210_func_7260(player, objdata);
