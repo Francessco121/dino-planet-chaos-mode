@@ -236,3 +236,41 @@ step = 1
 precision = 0
 percent = true
 default = 0
+
+[[manifest.config_options]]
+id = "speedup_min_time"
+name = "Speed Up Min Time"
+description = '''The minimum amount of time (in seconds) between changes in game speed. 
+Set both the minimum and maximum to zero to disable.'''
+type = "Number"
+min = 0
+max = 180
+step = 1
+precision = 0
+percent = false
+default = 0
+
+[[manifest.config_options]]
+id = "speedup_max_time"
+name = "Speed Up Max Time"
+description = '''The maximum amount of time (in seconds) between changes in game speed. 
+Set both the minimum and maximum to zero to disable.'''
+type = "Number"
+min = 0
+max = 180
+step = 1
+precision = 0
+percent = false
+default = 0
+
+[[manifest.config_options]]
+id = "speedup_max_amount"
+name = "Speed Up Max Increase"
+description = '''The maximum speed up multiplier.'''
+type = "Number"
+min = 0
+max = 8
+step = 1
+precision = 0
+percent = false
+default = 3
