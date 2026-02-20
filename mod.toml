@@ -118,16 +118,6 @@ percent = true
 default = 75
 
 [[manifest.config_options]]
-id = "disable_sfx_looping"
-name = "Disable SFX Looping"
-description = '''
-Whether looping should be disabled for ALL sound effects. Highly recommended if randomizing SFX.
-'''
-type = "Enum"
-options = [ "No", "Yes" ]
-default = "No"
-
-[[manifest.config_options]]
 id = "random_sfx_chance"
 name = "Random SFX Chance"
 description = '''The chance of randomizing sound effects.'''
