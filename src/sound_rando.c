@@ -15,6 +15,7 @@
 #include "sys/asset_thread.h"
 #include "sys/main.h"
 #include "sys/rand.h"
+#include "macros.h"
 
 #define SNDSTATEFLAG_01 0x01
 #define SNDSTATEFLAG_02 0x02
@@ -27,6 +28,46 @@ extern sndstate *g_SndpAllocStatesTail;
 extern sndstate *g_SndpFreeStatesHead;
 extern N_ALSndPlayer *g_SndPlayer;
 extern sndstate *func_80066064(ALBank *bank, ALSound *sound);
+
+extern u16 gFootstepSfxBank1[36];
+extern u16 gFootstepSfxBank2[36];
+extern u16 gFootstepSfxBank3[36];
+extern u16 gFootstepSfxBank4[36];
+extern u16 gFootstepSfxBank5[10];
+
+static _Bool is_footstep_sound(s32 id) {
+    for (u32 i = 0; i < ARRAYCOUNT(gFootstepSfxBank1); i++) {
+        if (id == gFootstepSfxBank1[i]) {
+            return TRUE;
+        }
+    }
+
+    for (u32 i = 0; i < ARRAYCOUNT(gFootstepSfxBank2); i++) {
+        if (id == gFootstepSfxBank2[i]) {
+            return TRUE;
+        }
+    }
+
+    for (u32 i = 0; i < ARRAYCOUNT(gFootstepSfxBank3); i++) {
+        if (id == gFootstepSfxBank3[i]) {
+            return TRUE;
+        }
+    }
+
+    for (u32 i = 0; i < ARRAYCOUNT(gFootstepSfxBank4); i++) {
+        if (id == gFootstepSfxBank4[i]) {
+            return TRUE;
+        }
+    }
+
+    for (u32 i = 0; i < ARRAYCOUNT(gFootstepSfxBank5); i++) {
+        if (id == gFootstepSfxBank5[i]) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 #include "recomp/dlls/engine/6_AMSFX_recomp.h"
 
@@ -106,7 +147,8 @@ RECOMP_HOOK_RETURN_DLL(dll_6_func_DE8) void dll_6_func_DE8_hook_ret(void) {
         soundDef->bankAndClipID = rand_next(0, numMpegEntries - 1) | IS_MP3;
     } else {
         // Randomize SFX sound IDs
-        if (rand_next(0, 99) < (f32)recomp_get_config_double("random_sfx_chance")) {
+        if (rand_next(0, 99) < (f32)recomp_get_config_double("random_sfx_chance")
+                && ((recomp_get_config_u32("random_footstep_sfx") != 0) || !is_footstep_sound(soundID))) {
             soundDef->bankAndClipID = rand_next(0, _bss_0->bankArray[0]->instArray[0]->soundCount - 1);
             if (forceSFX) {
                 soundDef->bankAndClipID = forceSFXID;

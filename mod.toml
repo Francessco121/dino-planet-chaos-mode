@@ -130,6 +130,16 @@ percent = true
 default = 0
 
 [[manifest.config_options]]
+id = "random_footstep_sfx"
+name = "Randomize Footstep SFX"
+description = '''
+Should random SFX apply to footstep sounds.
+'''
+type = "Enum"
+options = [ "No", "Yes" ]
+default = "No"
+
+[[manifest.config_options]]
 id = "random_sfx_pitch_chance"
 name = "Random SFX Pitch Chance"
 description = '''The chance of randomizing sound effect pitch.'''
