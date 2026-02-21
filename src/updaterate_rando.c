@@ -8,6 +8,7 @@
 
 static s32 speedup = 0;
 static s32 speedupTimer = 0;
+static s32 alternate = FALSE;
 
 RECOMP_ON_GAME_TICK_START_CALLBACK void speedup_tick(void) {
     s32 minTime = (s32)recomp_get_config_double("speedup_min_time");
@@ -21,7 +22,12 @@ RECOMP_ON_GAME_TICK_START_CALLBACK void speedup_tick(void) {
 
     if (speedupTimer <= 0) {
         speedupTimer = rand_next(minTime, MAX(maxTime, minTime)) * 60;
-        speedup = rand_next(-1, maxAmount);
+        if (alternate) {
+            speedup = 0;
+        } else {
+            speedup = rand_next(-1, maxAmount);
+        }
+        alternate = !alternate;
         recomp_printf("new speed: %d\n", speedup);
     }
 
