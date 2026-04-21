@@ -29,7 +29,7 @@ authors = [ "Banjeoin", "Rustyspottedcat", "Shinx121" ]
 game_id = "dino-planet"
 
 # Minimum version of the target recomp that this mod can run on.
-minimum_recomp_version = "0.2.0"
+minimum_recomp_version = "0.3.0"
 
 # Dependency mods. Each entry is the mod's ID and then an optional minimum version of the dependency mod.
 dependencies = [
