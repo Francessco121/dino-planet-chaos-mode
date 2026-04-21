@@ -13,8 +13,7 @@
 #include "sys/rand.h"
 #include "sys/rarezip.h"
 #include "gbi_extra.h"
-#include "variables.h"
-#include "functions.h"
+#include "macros.h"
 
 extern s32 gTexAllocTag;
 extern s32 D_80092A44;
@@ -36,7 +35,7 @@ extern s8 D_800B49DC;
 
 extern Gfx *tex_setup_display_lists(Texture *texture, Gfx *gdl);
 
-RECOMP_PATCH Texture* tex_load(s32 id, s32 param2) {
+RECOMP_PATCH Texture* tex_load(s32 id, u8 param2) {
     u32 binFileID; // sp74
     Texture* tex;
     s32 temp;

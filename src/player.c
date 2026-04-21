@@ -122,17 +122,17 @@ RECOMP_PATCH s32 dll_210_func_C3D0(Object* player, ObjFSA_Data* fsa, f32 arg2) {
                 _bss_8 = 0.5f;
                 _bss_8 = 38.4f * _bss_8 * speedScale;
                 _bss_4 = 0.0f;
-                player->speed.f[1] = 0.1f * _bss_8;
+                player->velocity.f[1] = 0.1f * _bss_8;
                 _bss_8 = _bss_8 + _bss_8;
                 gDLL_6_AMSFX->vtbl->play_sound(player, spAC->unk3B8[0x8], MAX_VOLUME, NULL, NULL, 0, NULL);
                 if (*_bss_14 != 0) {
-                    player->speed.f[1] *= *_data_8;
+                    player->velocity.f[1] *= *_data_8;
                     fsa->unk278 *= *_data_8;
                 }
             }
             break;
         case 0x12:
-            player->speed.f[1] += -0.1f * arg2;
+            player->velocity.f[1] += -0.1f * arg2;
             _bss_4 += arg2;
             func_800240BC(player, _bss_4 / _bss_8);
             if ((_bss_4 > 10.0f) && (fsa->unk4.unk25C & 0x10)) {
@@ -146,7 +146,7 @@ RECOMP_PATCH s32 dll_210_func_C3D0(Object* player, ObjFSA_Data* fsa, f32 arg2) {
                 if ((_bss_8 + 2.0f) < _bss_4) {
                     return 0xE;
                 }
-                if ((player->speed.f[1] < 0.0f) && (fsa->unk4.underwaterDist > 5.0f)) {
+                if ((player->velocity.f[1] < 0.0f) && (fsa->unk4.underwaterDist > 5.0f)) {
                     return 0x20;
                 }
             }
@@ -181,9 +181,9 @@ RECOMP_PATCH s32 dll_210_func_C3D0(Object* player, ObjFSA_Data* fsa, f32 arg2) {
             break;
         case 0x11:
             gDLL_18_objfsa->vtbl->func7(player, fsa, 1.0f, 1);
-            player->speed.f[1] += -0.1f * arg2;
+            player->velocity.f[1] += -0.1f * arg2;
             if (player->animProgress > 0.99f) {
-                player->speed.f[1] = 0.0f;
+                player->velocity.f[1] = 0.0f;
                 return 2;
             }
             break;
@@ -279,7 +279,7 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
 
     if (fsa->enteredAnimState != 0) {
         fsa->unk270 = PLAYER_ASTATE_Ledge_Grab_Holding;
-        player->speed.f[1] = 0.0f;
+        player->velocity.f[1] = 0.0f;
     }
     objdata = player->data;
     objdata->unk7FC = 0.0f;
@@ -296,10 +296,10 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
     switch (_bss_200) {
     case 0:
         if (fsa->unk33A != 0) {
-            player->positionMirror.f[0] = objdata->unk7EC.x;
-            player->positionMirror.f[1] = objdata->unk7EC.y;
-            player->positionMirror.f[2] = objdata->unk7EC.z;
-            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            player->globalPosition.f[0] = objdata->unk7EC.x;
+            player->globalPosition.f[1] = objdata->unk7EC.y;
+            player->globalPosition.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->globalPosition.f[0], player->globalPosition.f[1], player->globalPosition.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
             func_80023D30(player, (s32) _data_564[2], 0.0f, 1U);
             fsa->animTickDelta = 0.01f;
             _bss_202 = _bss_200 = 2;
@@ -308,10 +308,11 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
             temp_fa0 = _bss_1B0[2] + (objdata->unk490.unk4 - objdata->unk7EC.y);
             temp_fa0 = -temp_fa0 * -0.3f;
             if (temp_fa0 >= 0.0f) {
-                player->speed.f[1] = sqrtf(temp_fa0);
+                player->velocity.f[1] = sqrtf(temp_fa0);
             } else {
-                player->speed.f[1] = 0.0f;
+                player->velocity.f[1] = 0.0f;
             }
+
             sp48.f[0] = *_bss_1F8 * objdata->unk490.unk1C.x;
             sp48.f[1] = *_bss_1F8 * objdata->unk490.unk1C.y;
             sp48.f[2] = *_bss_1F8 * objdata->unk490.unk1C.z;
@@ -327,13 +328,13 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         } else {
             gDLL_18_objfsa->vtbl->func10(player, fsa, arg2, 0.1f);
         }
-        gDLL_2_Camera->vtbl->func10(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
+        gDLL_2_Camera->vtbl->reposition_player(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         break;
     case 2:
         temp_fa0 = _bss_1B0[2] + objdata->unk490.unk4;
         // @recomp: Remove gravity applied when jumping up to grab a ledge.
         //          Gravity makes it impossible to grab ledges when the player is scaled down.
-        //player->speed.f[1] += -0.15f * arg2;
+        //player->velocity.f[1] += -0.15f * arg2;
         sp68 = (objdata->unk7EC.y - objdata->unk490.unk8) / (temp_fa0 - objdata->unk490.unk8);
         if (sp68 < 0.0f) {
             sp68 = 0.0f;
@@ -344,7 +345,7 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         player->srt.transl.f[2] = (fsa->unk2EC.z * sp68) + _bss_208;
         // @recomp: Cancel ledge grab jump if we start falling. Otherwise, the player will just
         //          fall through the world.
-        if (player->speed.f[1] < 0) {
+        if (player->velocity.f[1] < 0) {
             return 0x15;
         }
         if (temp_fa0 <= objdata->unk7EC.y) {
@@ -352,10 +353,10 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
             sp47 = 1;
             sp6C = 0.035f;
             player->srt.transl.f[1] = objdata->unk490.unk4;
-            player->speed.f[1] = 0.0f;
+            player->velocity.f[1] = 0.0f;
         }
         objdata->unk490.unk10 += (player->srt.transl.f[1] - objdata->unk490.unk10) * 0.02f * arg2;
-        gDLL_2_Camera->vtbl->func10(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
+        gDLL_2_Camera->vtbl->reposition_player(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         shadows_set_custom_obj_pos(player, objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         break;
     case 3:
@@ -373,7 +374,7 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
                 sp6C = 0.008f;
             }
         }
-        gDLL_2_Camera->vtbl->func10(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
+        gDLL_2_Camera->vtbl->reposition_player(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         shadows_set_custom_obj_pos(player, objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         break;
     case 6:
@@ -384,14 +385,14 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         } else if ((fsa->yAnalogInput < -5.0f) && (objdata->unk490.unk46 != 0x11)) {
             return 0x15;
         }
-        gDLL_2_Camera->vtbl->func10(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
+        gDLL_2_Camera->vtbl->reposition_player(objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         shadows_set_custom_obj_pos(player, objdata->unk490.unkC, objdata->unk490.unk10, objdata->unk490.unk14);
         break;
     case 5:
         if (fsa->unk33A != 0) {
-            player->positionMirror.f[0] = objdata->unk7EC.x;
-            player->positionMirror.f[2] = objdata->unk7EC.z;
-            inverse_transform_point_by_object(player->positionMirror.f[0], 0.0f, player->positionMirror.f[2], player->srt.transl.f, &sp68, &player->srt.transl.f[2], player->parent);
+            player->globalPosition.f[0] = objdata->unk7EC.x;
+            player->globalPosition.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->globalPosition.f[0], 0.0f, player->globalPosition.f[2], player->srt.transl.f, &sp68, &player->srt.transl.f[2], player->parent);
             dll_210_func_7260(player, objdata);
             func_80023D30(player, (s32) *objdata->modAnims, 0.0f, 1U);
             return 2;
@@ -399,11 +400,11 @@ RECOMP_PATCH s32 dll_210_func_E14C(Object* player, ObjFSA_Data* fsa, f32 arg2) {
         sp88.z = objdata->unk490.unkC + ((player->srt.transl.x - objdata->unk490.unkC) * player->animProgress);
         sp88.y = objdata->unk490.unk10 + ((objdata->unk490.unk4 - objdata->unk490.unk10) * player->animProgress);
         sp88.x = objdata->unk490.unk14 + ((player->srt.transl.z - objdata->unk490.unk14) * player->animProgress);
-        gDLL_2_Camera->vtbl->func10(sp88.z, sp88.y, sp88.x);
+        gDLL_2_Camera->vtbl->reposition_player(sp88.z, sp88.y, sp88.x);
         shadows_set_custom_obj_pos(player, sp88.z, sp88.y, sp88.x);
         break;
     default:
-        player->speed.f[1] = 0.0f;
+        player->velocity.f[1] = 0.0f;
         temp_fv0 = (1.0f - ((objdata->unk490.unk0 - 32.0f) / 32));
         sp5E = temp_fv0 * 1023.0f;
         _bss_200 = 0;
@@ -458,18 +459,18 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
     switch (_bss_200) {
     case 0:
         if (fsa->unk33A != 0) {
-            player->positionMirror.f[0] = objdata->unk7EC.x;
-            player->positionMirror.f[1] = objdata->unk7EC.y;
-            player->positionMirror.f[2] = objdata->unk7EC.z;
-            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            player->globalPosition.f[0] = objdata->unk7EC.x;
+            player->globalPosition.f[1] = objdata->unk7EC.y;
+            player->globalPosition.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->globalPosition.f[0], player->globalPosition.f[1], player->globalPosition.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
             func_80023D30(player, _data_69C[1], 0.0f, 1U);
             fsa->animTickDelta = 0.01f;
             _bss_202 = _bss_200 = 1;
             func_8001A3FC(sp5C, 0U, 0, 0.0f, player->srt.scale, &sp7C, &sp60);
             player->srt.transl.f[1] -= sp7C.f[1];
             temp_fa1 = (_bss_1B0[2] + (objdata->unk6B0.unk0.y - objdata->unk7EC.y));
-            player->speed.f[1] = sqrtf(-temp_fa1 * -5.6f);
-            player->speed.f[1] = sqrtf(-temp_fa1 * -0.34f);
+            player->velocity.f[1] = sqrtf(-temp_fa1 * -5.6f);
+            player->velocity.f[1] = sqrtf(-temp_fa1 * -0.34f);
             sp4C.f[0] = *_bss_1F8 * objdata->unk6B0.unkC.x;
             sp4C.f[1] = *_bss_1F8 * objdata->unk6B0.unkC.y;
             sp4C.f[2] = *_bss_1F8 * objdata->unk6B0.unkC.z;
@@ -482,7 +483,7 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
             _bss_204 = player->srt.transl.f[0];
             _bss_208 = player->srt.transl.f[2];
         } else {
-            player->speed.f[1] = 0.0f;
+            player->velocity.f[1] = 0.0f;
             gDLL_18_objfsa->vtbl->func10(player, fsa, arg2, 0.1f);
         }
         break;
@@ -490,10 +491,10 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
         temp_fa1 = _bss_1B0[2] + objdata->unk6B0.unk0.y;
         // @recomp: Remove gravity applied when jumping up to grab a rope.
         //          Gravity makes it impossible to grab ropes when the player is scaled down.
-        //player->speed.f[1] += -0.17f * arg2;
+        //player->velocity.f[1] += -0.17f * arg2;
         // @recomp: Cancel rope grab jump if we start falling. Otherwise, the player will just
         //          fall through the world.
-        if (player->speed.f[1] < 0) {
+        if (player->velocity.f[1] < 0) {
             return 13 + 1;
         }
         var_fv0 = (objdata->unk7EC.y - objdata->unk6B0.unk0.z) / (temp_fa1 - objdata->unk6B0.unk0.z);
@@ -517,16 +518,16 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
             player->srt.transl.f[0] = objdata->unk6B0.unk1C.x;
             player->srt.transl.f[1] = objdata->unk6B0.unk1C.y;
             player->srt.transl.f[2] = objdata->unk6B0.unk1C.z;
-            player->speed.f[1] = 0.0f;
+            player->velocity.f[1] = 0.0f;
         }
         break;
     case 7:
     case 8:
         if (fsa->unk33A != 0) {
-            player->positionMirror.f[0] = objdata->unk7EC.x;
-            player->positionMirror.f[1] = objdata->unk7EC.y;
-            player->positionMirror.f[2] = objdata->unk7EC.z;
-            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            player->globalPosition.f[0] = objdata->unk7EC.x;
+            player->globalPosition.f[1] = objdata->unk7EC.y;
+            player->globalPosition.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->globalPosition.f[0], player->globalPosition.f[1], player->globalPosition.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
             dll_210_func_7260(player, objdata);
             func_80023D30(player, _data_6C0[0], 0.0f, 1U);
             return 0x2E;
@@ -535,10 +536,10 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
     case 2:
         if (fsa->unk33A != 0) {
             if (fsa->yAnalogInput > 5.0f) {
-                player->positionMirror.f[0] = objdata->unk7EC.x;
-                player->positionMirror.f[1] = objdata->unk7EC.y;
-                player->positionMirror.f[2] = objdata->unk7EC.z;
-                inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+                player->globalPosition.f[0] = objdata->unk7EC.x;
+                player->globalPosition.f[1] = objdata->unk7EC.y;
+                player->globalPosition.f[2] = objdata->unk7EC.z;
+                inverse_transform_point_by_object(player->globalPosition.f[0], player->globalPosition.f[1], player->globalPosition.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
                 dll_210_func_7260(player, objdata);
                 func_80023D30(player, _data_6C0[0], 0.0f, 1U);
                 return 0x2E;
@@ -552,10 +553,10 @@ RECOMP_PATCH s32 dll_210_func_16648(Object* player, ObjFSA_Data* fsa, f32 arg2) 
         break;
     case 3:
         if (fsa->yAnalogInput > 5.0f) {
-            player->positionMirror.f[0] = objdata->unk7EC.x;
-            player->positionMirror.f[1] = objdata->unk7EC.y;
-            player->positionMirror.f[2] = objdata->unk7EC.z;
-            inverse_transform_point_by_object(player->positionMirror.f[0], player->positionMirror.f[1], player->positionMirror.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
+            player->globalPosition.f[0] = objdata->unk7EC.x;
+            player->globalPosition.f[1] = objdata->unk7EC.y;
+            player->globalPosition.f[2] = objdata->unk7EC.z;
+            inverse_transform_point_by_object(player->globalPosition.f[0], player->globalPosition.f[1], player->globalPosition.f[2], player->srt.transl.f, &player->srt.transl.f[1], &player->srt.transl.f[2], player->parent);
             dll_210_func_7260(player, objdata);
             func_80023D30(player, _data_6C0[0], 0.0f, 1U);
             return 0x2E;
